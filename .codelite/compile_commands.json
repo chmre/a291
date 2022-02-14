@@ -1,0 +1,9 @@
+[{
+  "directory": "/home/pi/cpp_projects/a291/a291unit",
+  "command": "/usr/bin/g++ -g -DDEBUG -I. -I. -MG -MP -MT./Debug/dhtControler.cpp.o -MF./Debug/dhtControler.cpp.o.d -MM dhtControler.cpp",
+  "file": "/home/pi/cpp_projects/a291/a291unit/dhtControler.cpp"
+ }, {
+  "directory": "/home/pi/cpp_projects/a291/a291unit",
+  "command": "/usr/bin/g++ -c /home/pi/cpp_projects/a291/a291unit/dhtControler.cpp -g -DDEBUG -o ./Debug/dhtControler.cpp.o -I. -I.",
+  "file": "/home/pi/cpp_projects/a291/a291unit/dhtControler.cpp"
+ }]

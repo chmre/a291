@@ -1,0 +1,16 @@
+[Unit]
+Description=MQTT client service
+After=network.taget
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/a291d/a291d --config /etc/a291d/a291d.conf
+ExecReload=/bin/kill -HUP $MAINPID
+ExecCfgDump=/bin/kill -USR1 $MAINPID
+User=root
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=a291d
+
+[Install]
+WantedBy=multi-user.target

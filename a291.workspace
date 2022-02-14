@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeLite_Workspace Name="a291" Database="" Version="10.0.0">
+  <Project Name="a291unit" Path="a291unit/a291unit.project" Active="No"/>
+  <Project Name="a291_console" Path="a291/a291.project" Active="Yes"/>
+  <Project Name="a291d" Path="a291d/a291d.project" Active="No"/>
+  <Project Name="BME280" Path="BME280/BME280.project" Active="No"/>
+  <BuildMatrix>
+    <WorkspaceConfiguration Name="Debug" Selected="yes">
+      <Environment/>
+      <Project Name="a291unit" ConfigName="Debug"/>
+      <Project Name="a291_console" ConfigName="Debug"/>
+      <Project Name="a291d" ConfigName="Debug"/>
+      <Project Name="BME280" ConfigName="Debug"/>
+    </WorkspaceConfiguration>
+    <WorkspaceConfiguration Name="Release" Selected="no">
+      <Environment/>
+      <Project Name="a291unit" ConfigName="Release"/>
+      <Project Name="a291_console" ConfigName="Release"/>
+      <Project Name="a291d" ConfigName="Release"/>
+      <Project Name="BME280" ConfigName="Release"/>
+    </WorkspaceConfiguration>
+  </BuildMatrix>
+</CodeLite_Workspace>

@@ -1,0 +1,236 @@
+#ifndef CONFIGURABEL_H
+#define CONFIGURABEL_H
+
+#include "a291unitDefinitions.h"
+#include "slog.h"
+
+#include <iostream>
+#include <string.h>
+#include <unistd.h>
+
+
+namespace a291unit {
+	
+    enum ActionResult : int {
+		ar_configurationError=-2,
+		ar_unrecoverable=-1,
+        ar_success=0,
+        ar_responseTimeout=1,
+        ar_signalTimeout=2,
+        ar_crcError=3,
+		ar_dataReadError=4,
+		ar_signalError=5,
+    };
+
+    enum CofigurabelStatus : uint {
+		cs_configured=0,
+        cs_ready=1,
+        cs_idle=2,
+        cs_sampling=3,
+		cs_disabled=4,
+    };
+	
+	enum MqttReportStatus : uint {
+		rs_reportPending=0,
+		rs_noReport=1,
+	};
+	
+	enum MqttReportType : uint {
+		rt_json=0,
+		rt_value=1,
+	};
+	
+/*	
+	enum GpioControlMode : uint {
+		cm_extern=0,
+		cm_automation=1,
+	};
+*/		
+	class Configurabel {
+
+	/*
+	 * constructors are protected as this is a pure virtual base class
+	 * that can not be instatiated.
+	 */
+	protected:
+		Configurabel(const int instanceNumber, const std::string relatedControler, const std::string configurableType, uint8_t numberOfGpioPins, const uint8_t valueCount, const uint8_t settingsCount);
+	
+	protected:
+		const int mInstanceNumber;
+		
+	/*
+	 * the associated controler type of this configurable
+	 * its basic use is for the unit manager to instantiate a controler
+	 * and assign the configurable to it.
+	 */ 
+	protected:
+		// 
+		const std::string mControlerType;
+		
+	public:	
+		const std::string& getControlerType() const {return mControlerType;}
+
+	/**
+	 * the type of the configurable
+	 * 
+	 */
+	protected:
+		const std::string mConfigurableType;
+
+	public:
+		const std::string& getConfigurabelType() const {return mConfigurableType;}
+        const bool isConfigurabelTypeName(std::string name) const {return (mConfigurableType.compare(name) == 0) ? true : false;}
+
+	/**
+	 * the GPIO numbers used by the configurable.
+	 * if set to 0, no GPIO is used by the configurable
+	 * 
+	 */
+	protected:
+        const uint8_t mGpioPinCount;
+        uint8_t * mGpioPinList;
+
+	public:
+		// set or get the pin configuration as string
+		virtual std::string getPinConfiguration();
+		virtual bool setPinConfiguration(std::string pinConfiguration);
+		virtual const uint8_t getGpioPinCount() const { return mGpioPinCount; }
+		virtual const uint8_t getGpioPin(int index);
+		virtual const uint8_t getConnectionPin(int index);
+		virtual bool hasGpioPin(int gpioPinNumber);
+
+	/*
+	 * the alias name of the configurable.
+	 * Alias name is used by mqtt as part of the topic
+	 * 
+	 */
+	protected:
+        std::string mAliasName;
+
+	public:
+		void setAliasName(const std::string& newAliasName) {this->mAliasName = newAliasName;}
+		const std::string& getAliasName() const {return mAliasName;}
+
+	/*
+	 * the operation status of the configurable.
+	 * it's value define operations to be done by the controler
+	 * 
+	 *   cs_configured -> the configurable is part of the configuration
+	 *   cs_ready      -> the configuration is valid and ready to initialize
+	 *   cs_idle       -> the configurable is ready to perform operations
+	 *   cs_sampling   -> the configuration is bussy eiter sampling, recovering, or else.
+	 *                    the controler does not do enything while the configurable is in this state.
+	 *                    A configurable schould override getCurrentStatus() to change state to cs_idle if appropriate.
+	 *   cs_disabled   -> the configurable is unusable, ether due to configuration error or unrecoverable error.
+	 *                    
+	 */
+	protected:
+		CofigurabelStatus mCurrentStatus;
+
+	public:
+		virtual void setCurrentStatus(const CofigurabelStatus& newStatus) {this->mCurrentStatus = newStatus;}
+		virtual const CofigurabelStatus& getCurrentStatus() const { return mCurrentStatus;}
+		
+        static std::string StatusToString(CofigurabelStatus status);
+
+
+    /*
+	 * MQTT support of the configurable
+	 * 
+	 *    rs_reportPending -> report all values to the broker
+	 *    rs_noReport      -> do not report values to the broker
+	 * 
+	 */
+	protected:
+        const uint8_t mMqttSubscriptionCount; // the number of mqtt subscriptions
+        float* mSubscriptionValueList;
+        std::string* mSubscriptionNameList;
+		MqttReportStatus mMqttReportStatus;
+		MqttReportType mMqttReportType;
+
+	public:
+		virtual const uint8_t& getMqttSubscriptionCount() const {return mMqttSubscriptionCount;}
+		virtual const std::string getSubscription(std::string topic, int index);
+		virtual bool matchControl(std::string messageAlias);
+		virtual void setMqttReportDone() { mMqttReportStatus = rs_noReport; }
+		virtual void setMqttReportPending() { mMqttReportStatus = rs_reportPending; }
+		virtual MqttReportStatus getMqttReportStatus() { return mMqttReportStatus; }
+		virtual MqttReportType getMqttReportType() { return mMqttReportType; }
+
+		virtual void setMqttSubscriptionValue(std::string subscriptionAlias, float toValue) { SLOG_WARNING("Configurable setMqttSubscriptionValue() dropp message"); }
+
+
+	/*
+	 * the values collected or generated by the configuration.
+	 * all values are float representation.
+	 * 
+	 */
+	protected:
+        const uint8_t mValueCount; // the number of values maintained by the device
+        float* mValueList;
+        float* mCorrectionList;
+        std::string* mNameList;
+        std::string* mUnitList;
+        time_t mValueTimestamp; // the time when the values are last updated
+
+	public:
+		// getter and setter for values
+		virtual const uint8_t& getValueCount() const { return mValueCount; }
+		virtual const float& getValue(unsigned int index) const { return mValueList[index]; }
+		virtual const std::string& getValueName(unsigned int index) const { return mNameList[index]; }
+		virtual const std::string& getValueUnit(unsigned int index) const { return mUnitList[index]; }
+		
+        virtual bool updateValues(const float *sensorValues, const int len, a291unit::ActionResult readResult);
+
+
+
+	/*
+	 * Action result stores the resulting status of the last operation performed on the devise.
+	 * 
+	 */
+	protected:
+		// last operation status
+		ActionResult mLastReadResult;
+        time_t mLastReadTimestamp; // time of last read attempt
+		
+	public:
+		virtual const ActionResult& getLastReadResult() const {return mLastReadResult;}
+        static std::string ActionResultToString(ActionResult result);
+
+
+	// pure virtual functions
+	public:
+		/**
+		 * @brief this function is called when the configuration is loadet.
+	     *        for each configuration item folowing the congituration object name.
+		 * @param name   the name of the configuration item
+		 * @param value  the value of the configuration item
+		 */
+		virtual ActionResult setConfiguration(std::string name, std::string value) = 0;
+
+		/**
+		 * @brief this function is called when the configuration of a configurable is to
+		 *        be written as text output. The configurable schould write its configuration to the stream. 
+		 * @param cfg_out  the output stream to write to
+		 */
+		virtual ActionResult listConfiguration(std::ofstream &cfg_out) = 0;
+
+		/**
+		 * @brief All configurations are loadet. When called the configurable is to validate configuration and dpendencys.
+		 *        if save to run status schould be set to cs_ready, else cs_disabled
+		 */
+		virtual ActionResult onCheckConfiguration() = 0;
+		
+		
+		/**
+		 * @brief This finction is called for all configurables that have a status of cs_ready.
+		 *        it is caled after onCheckConfiguration().
+		 * 		  if successfull, the status schould be changed to cs_idle.
+		 *        note: if a configurable does not need to initialize, then just set the status to cs_idle.
+		 */
+		virtual ActionResult onInitialize() = 0;
+
+	};
+}
+
+#endif
